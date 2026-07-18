@@ -4,7 +4,11 @@ import Cart from "../models/Cart.js";
 // Create Order
 export const createOrder = async (req, res) => {
   try {
-    const cartItems = await Cart.find({ user: req.user._id }).populate("product");
+    const { shippingAddress, paymentMethod } = req.body;
+
+    const cartItems = await Cart.find({
+      user: req.user._id,
+    }).populate("product");
 
     if (cartItems.length === 0) {
       return res.status(400).json({
@@ -24,30 +28,36 @@ export const createOrder = async (req, res) => {
     );
 
     const order = await Order.create({
-      customer: req.user._id,
+      user: req.user._id,
       products,
       totalAmount,
+      shippingAddress,
+      paymentMethod,
     });
 
-    // Clear cart after order
-    await Cart.deleteMany({ user: req.user._id });
+    // Clear cart after successful order
+    await Cart.deleteMany({
+      user: req.user._id,
+    });
 
     res.status(201).json({
       success: true,
+      message: "Order placed successfully",
       data: order,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// Get Order By Id
+// Get Order By ID
 export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate("customer", "name email")
+      .populate("user", "name email")
       .populate("products.product");
 
     if (!order) {
@@ -63,6 +73,7 @@ export const getOrderById = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
@@ -72,7 +83,7 @@ export const getOrderById = async (req, res) => {
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      customer: req.user._id,
+      user: req.user._id,
     }).populate("products.product");
 
     res.status(200).json({
@@ -82,6 +93,7 @@ export const getMyOrders = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
@@ -91,7 +103,7 @@ export const getMyOrders = async (req, res) => {
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find({})
-      .populate("customer", "name email")
+      .populate("user", "name email")
       .populate("products.product");
 
     res.status(200).json({
@@ -101,12 +113,13 @@ export const getAllOrders = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// Update Order Status
+// Update Order Status (Admin)
 export const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -123,10 +136,12 @@ export const updateOrderStatus = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Order status updated successfully",
       data: order,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
@@ -149,10 +164,12 @@ export const cancelOrder = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Order cancelled successfully",
       data: order,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }

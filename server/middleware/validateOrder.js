@@ -70,11 +70,11 @@ export const validateOrderStatus = (req, res, next) => {
   const { status } = req.body;
 
   const allowedStatuses = [
-    "pending",
-    "processing",
-    "shipped",
-    "delivered",
-    "cancelled",
+    "Pending",
+    "Processing",
+    "Shipped",
+    "Delivered",
+    "Cancelled",
   ];
 
   if (!status || !allowedStatuses.includes(status)) {
